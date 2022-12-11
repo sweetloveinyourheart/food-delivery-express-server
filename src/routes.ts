@@ -1,5 +1,6 @@
 import { UserController } from "./controller/UserController"
-import {CategoryController} from './controller/CategoryController'
+import { CategoryController } from './controller/CategoryController'
+import { ProductController } from './controller/ProductController'
 
 export const Routes = [{
     method: "post",
@@ -25,5 +26,18 @@ export const Routes = [{
     route: "/category/getList",
     controller: CategoryController,
     action: 'getCategory'
+},
+
+{
+    method: 'post',
+    route: "/product/new",
+    controller: ProductController,
+    action: 'newProduct'
+},
+{
+    method: 'get',
+    route: "/product/getList",
+    controller: ProductController,
+    action: 'getProduct'
 }
 ]

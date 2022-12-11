@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Category } from "./Category";
 import { Order } from "./Order";
 
@@ -14,20 +14,21 @@ export class Product {
     price: string
 
     @Column()
-    images: string
+    image: string
 
-    @Column({ type: 'float' })
+    @Column({ type: 'float', default: 0 })
     rating: number
 
-    @Column()
+    @Column({ default: 0 })
     buy_times: number
 
     @CreateDateColumn()
     created_at: Date
 
-    @ManyToMany(() => Order, order => order.product) 
-    order: Order
+    @ManyToMany(() => Order, order => order.products) 
+    orders: Order[]
 
-    @ManyToMany(() => Category, category => category.product)
-    category: Category
+    @ManyToMany(() => Category, category => category.products)
+    @JoinTable()
+    categories: Category[]
 }
