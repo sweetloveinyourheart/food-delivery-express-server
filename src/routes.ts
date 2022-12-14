@@ -1,43 +1,23 @@
+import { Router } from 'express'
 import { UserController } from "./controller/UserController"
 import { CategoryController } from './controller/CategoryController'
 import { ProductController } from './controller/ProductController'
+import { AuthGuard } from './middlewares/jwt'
 
-export const Routes = [{
-    method: "post",
-    route: "/user/register",
-    controller: UserController,
-    action: "register"
-},
-{
-    method: "post",
-    route: "/user/login",
-    controller: UserController,
-    action: "login"
-},
-{
-    method: 'post',
-    route: "/category/new",
-    controller: CategoryController,
-    action: 'newCategory'
-},
+const router = Router()
 
-{
-    method: 'get',
-    route: "/category/getList",
-    controller: CategoryController,
-    action: 'getCategory'
-},
+const categoryController = new CategoryController()
+const productController = new ProductController()
+const userController = new UserController()
 
-{
-    method: 'post',
-    route: "/product/new",
-    controller: ProductController,
-    action: 'newProduct'
-},
-{
-    method: 'get',
-    route: "/product/getList",
-    controller: ProductController,
-    action: 'getProduct'
-}
-]
+router.get('/category/getList', categoryController.getCategory)
+router.post('/category/new', categoryController.newCategory)
+
+router.get('/product/getList', productController.getProduct)
+router.post('/product/new', productController.newProduct)
+
+router.post('/user/login', userController.login)
+router.post('/user/register', userController.register)
+router.get('/user/getProfile', AuthGuard, userController.getProfile)
+
+export default router

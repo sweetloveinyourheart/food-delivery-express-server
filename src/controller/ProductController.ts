@@ -1,19 +1,22 @@
 import { NextFunction, Request, Response } from 'express'
 import { AppDataSource } from '../data-source'
 import { Product } from '../entity/Product'
-import { Res } from '..'
 import { Category } from '../entity/Category'
 
 export class ProductController {
+    constructor(
+        private productRepository = AppDataSource.getRepository(Product),
+        private categoryRepository = AppDataSource.getRepository(Category)
+    ) {
+        this.newProduct = this.newProduct.bind(this)
+        this.getProduct = this.getProduct.bind(this)
+    }
 
-    private productRepository = AppDataSource.getRepository(Product)
-    private categoryRepository = AppDataSource.getRepository(Category)
-
-    async newProduct(req: Request, res: Response, next: NextFunction): Promise<Res> {
+    async newProduct(req: Request, res: Response, next: NextFunction) {
         try {
             const { name, image, price, category_id } = req.body;
 
-            const category = await this.categoryRepository.findOneBy({id: category_id})
+            const category = await this.categoryRepository.findOneBy({ id: category_id })
 
             const product = Object.assign(new Product(), {
                 name,
@@ -24,35 +27,31 @@ export class ProductController {
 
             const newProduct = await this.productRepository.save(product)
 
-            return {
+            return res.status(201).json({
                 data: newProduct,
-                error: null,
-                status: 201
-            }
+                error: null
+            })
 
         } catch (error) {
-            return {
+            return res.status(400).json({
                 data: null,
-                error: "Has error !",
-                status: 400
-            }
+                error: 'Cannot create product !'
+            })
         }
     }
 
-    async getProduct(req: Request, res: Response, next: NextFunction): Promise<Res> {
+    async getProduct(req: Request, res: Response, next: NextFunction) {
         try {
             const data = await this.productRepository.find({ relations: ['categories'] })
-            return {
+            return res.status(200).json({
                 data,
-                error: null,
-                status: 200
-            }
+                error: null
+            })
         } catch (error) {
-            return {
+            return res.status(404).json({
                 data: null,
-                error: 'Cannot get any categories !',
-                status: 404
-            }
+                error: 'Cannot get any categories !'
+            })
         }
     }
 }

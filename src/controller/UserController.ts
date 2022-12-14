@@ -2,13 +2,18 @@ import { AppDataSource } from '../data-source'
 import { NextFunction, Request, Response } from "express"
 import { User } from "../entity/User"
 import { genSalt, hash, compare } from 'bcrypt'
-import { Res } from '..'
+import * as jwt from 'jsonwebtoken'
 
 export class UserController {
-
-    private userRepository = AppDataSource.getRepository(User)
-
-    async login(request: Request, response: Response, next: NextFunction): Promise<Res> {
+    constructor(
+        private userRepository = AppDataSource.getRepository(User)
+    ) {
+        this.login = this.login.bind(this)
+        this.register = this.register.bind(this)
+        this.getProfile = this.getProfile.bind(this)
+    }
+    
+    async login(request: Request, response: Response, next: NextFunction) {
         try {
             const { username, password } = request.body;
 
@@ -24,22 +29,29 @@ export class UserController {
                 }
             }
 
-            return {
-                data: user,
-                error: null,
-                status: 401
-            }
+            const accessToken = jwt.sign(
+                { userId: user.id, username: user.username },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h'}
+            )
+
+            return response.status(200).json({
+                data: {
+                    access_token: accessToken
+                },
+                error: null
+            })
             
         } catch (error) {
-            return {
+            return response.status(401).json({
                 data: null,
                 error: 'Username or password is not valid !',
                 status: 401
-            }
+            })
         }
     }
 
-    async register(request: Request, response: Response, next: NextFunction): Promise<Res> {
+    async register(request: Request, response: Response, next: NextFunction){
         try {
             const { fullname, username, password, email, address } = request.body;
 
@@ -57,62 +69,30 @@ export class UserController {
             })
 
             const newUser =  await this.userRepository.save(user)
-            return {
+            return response.status(201).json({
                 data: newUser,
-                error: 'Username or password is not valid !',
-                status: 201
-            }
+                error: null
+            })
         } catch (error) {
-            return {
+            return response.status(400).json({
                 data: null,
-                error: 'Create failed !',
-                status: 201
-            }
+                error: "Create failed"
+            })
         }
     }
 
-    // async all(request: Request, response: Response, next: NextFunction) {
-    //     return this.userRepository.find()
-    // }
+    async getProfile(request: Request, response: Response, next: NextFunction) {
+        try {
+            const userId = request['userId']
 
-    // async one(request: Request, response: Response, next: NextFunction) {
-    //     const id = parseInt(request.params.id)
-
-
-    //     const user = await this.userRepository.findOne({
-    //         where: { id }
-    //     })
-
-    //     if (!user) {
-    //         return "unregistered user"
-    //     }
-    //     return user
-    // }
-
-    // async save(request: Request, response: Response, next: NextFunction) {
-    //     const { firstName, lastName, age } = request.body;
-
-    //     const user = Object.assign(new User(), {
-    //         firstName,
-    //         lastName,
-    //         age
-    //     })
-
-    //     return this.userRepository.save(user)
-    // }
-
-    // async remove(request: Request, response: Response, next: NextFunction) {
-    //     const id = parseInt(request.params.id)
-
-    //     let userToRemove = await this.userRepository.findOneBy({ id })
-
-    //     if (!userToRemove) {
-    //         return "this user not exist"
-    //     }
-
-    //     await this.userRepository.remove(userToRemove)
-
-    //     return "user has been removed"
-    // }
-
+            const user = await this.userRepository.findOneBy({ id: userId })
+            
+            return response.status(200).json({
+                data: user,
+                error: null
+            })
+        } catch (error) {
+            return response.sendStatus(403)
+        }
+    }
 }
